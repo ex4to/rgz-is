@@ -17,7 +17,8 @@ bot.command('id', (ctx) => {
 
 bot.command('monitoring',async (ctx) => {
     try {
-        await fetch('http://localhost:9100/metrics').then((e) => console.log(e))
+        const info = await fetch('http://localhost:9100/metrics').then((e) => e.json())
+        console.log(info)
         ctx.reply(`Working on`)
     } catch (e) {
         console.log(e, 'wild error')
