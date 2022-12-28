@@ -19,16 +19,13 @@ const monitoring = async () => {
 
     const availableMem = Number(availableMemRaw[1]).toFixed(20) / (1024 * 1024 * 1024);
 
-  if (availableMem < 0.01) {
+  if (availableMem < 0.1) {
     admins.forEach(
-      (e) => bot.telegram.sendMessage(e, `Высокая нагрузка на сервер. Оставшаяся память: ${availableMem} Gb`))
-  } else {
-    bot.telegram.sendMessage(955737136, `Всё гуд`)
+      (e) => bot.telegram.sendMessage(e, `Высокая нагрузка на сервер. Оставшаяся память: ${availableMem.toFixed(2)} Gb`))
   }
-
 }
 
-//  setInterval(() => monitoring(), 3500)
+const aboba = setInterval(() => monitoring(), 3500)
 
 bot.start((ctx) => {
   const message = `Please use the /id command to receive your id`;
@@ -85,5 +82,11 @@ Network traffic: ${networkTraffic.toFixed(2)} kb/s`);
 
 bot.launch();
 
-process.once('SIGINT', () => bot.stop('SIGINT'))
-process.once('SIGTERM', () => bot.stop('SIGTERM'))
+process.once('SIGINT', () => {
+	clearInterval(aboba)
+	bot.stop('SIGINT')
+})
+process.once('SIGTERM', () => {
+	clearInterval(aboba)
+	bot.stop('SIGTERM')
+})
