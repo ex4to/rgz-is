@@ -1,9 +1,34 @@
-import { Telegraf } from "telegraf";
+import { Telegraf, session } from "telegraf";
 import dotenv from "dotenv";
 
 const { parsed } = dotenv.config();
 
 const bot = new Telegraf(parsed?.BOT_TOKEN || "");
+const admins = parsed?.ADMINS_IDS.split(",")
+
+const monitoring = async () => {
+      const info = await fetch("http://localhost:9100/metrics").then((e) =>
+      e.text()
+    );
+
+    const availableMemRaw = info
+      .split("\n")
+      .filter((e) => e.includes('node_memory_MemAvailable_bytes') && e.charAt(0) !== "#")
+      .join("")
+      .split(" ");
+
+    const availableMem = Number(availableMemRaw[1]).toFixed(20) / (1024 * 1024 * 1024);
+
+  if (availableMem < 0.01) {
+    admins.forEach(
+      (e) => bot.telegram.sendMessage(e, `Высокая нагрузка на сервер. Оставшаяся память: ${availableMem} Gb`))
+  } else {
+    bot.telegram.sendMessage(955737136, `Всё гуд`)
+  }
+
+}
+
+//  setInterval(() => monitoring(), 3500)
 
 bot.start((ctx) => {
   const message = `Please use the /id command to receive your id`;
@@ -12,7 +37,8 @@ bot.start((ctx) => {
 
 bot.command("id", (ctx) => {
   console.log(ctx.message.from);
-  ctx.reply(`Ваш айди пользователя: ${ctx.message.from.id}`);
+  console.log(ctx.message.chat.id);
+  ctx.reply(`Ваш айди пользователя: ${ctx.message.from.id}. Айди этого чата: ${ctx.message.chat.id}`);
 });
 
 bot.command("debug", async (ctx) => {
@@ -58,3 +84,6 @@ Network traffic: ${networkTraffic.toFixed(2)} kb/s`);
 });
 
 bot.launch();
+
+process.once('SIGINT', () => bot.stop('SIGINT'))
+process.once('SIGTERM', () => bot.stop('SIGTERM'))
